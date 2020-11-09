@@ -1,0 +1,36 @@
+#    SPDX-License-Identifier: Apache License 2.0
+#
+#    SPDX-FileCopyrightText: 2022 Western Digital Corporation or its affiliates.
+#
+#    Author: Jaco Hofmann (jaco.hofmann@wdc.com)
+
+
+[package]
+authors = ["Jaco Hofmann <jaco.hofmann@wdc.com>"]
+edition = "2021"
+name = "omnixtend_endpoint_sim"
+version = "0.2.0"
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[build-dependencies]
+cbindgen = "0.24.3"
+
+[dependencies]
+atomic-option = "0.1.2"
+clap = {version="4.0.18", features=["derive"]}
+crossbeam = "0.8.2"
+ctrlc = "3.2.3"
+dashmap = "5.4.0"
+env_logger = "0.9.1"
+libc = "0.2.137"
+log = "0.4.17"
+modular = "1.0.0"
+parking_lot = "0.12.1"
+pnet = {version="0.31.0", features=["std"]}
+pnet_macros = "0.31.0"
+pnet_macros_support = "0.31.0"
+rand = "0.8.5"
+snafu = "0.7.3"
+omnixtend-rs = {path="../host_software/omnixtend-rs"}

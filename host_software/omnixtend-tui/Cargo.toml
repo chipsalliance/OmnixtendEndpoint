@@ -1,0 +1,37 @@
+#    SPDX-License-Identifier: Apache License 2.0
+#
+#    SPDX-FileCopyrightText: 2022 Western Digital Corporation or its affiliates.
+#
+#    Author: Jaco Hofmann (jaco.hofmann@wdc.com)
+
+[package]
+name = "omnixtend-tui"
+version = "0.1.0"
+authors = ["Jaco Hofmann <jaco.hofmann@wdc.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+omnixtend-rs = { path = "../omnixtend-rs" }
+log = "0.4.17"
+snafu = "0.7.3"
+env_logger = "0.10.0"
+clap = "4.0.18"
+pnet = {version="0.31.0", features=["std"]}
+pnet_macros_support = "0.31.0"
+ctrlc = "3.2.3"
+crossbeam = "0.8.2"
+log-panics = "2.1.0"
+humansize = "2.1.0"
+rand = "0.8.5"
+rayon = "1.5.3"
+tui = "0.19.0"
+crossterm = "0.25.0"
+regex = "1.6.0"
+dashmap = "5.4.0"
+human_bytes = "0.4.1"
+better-panic = "0.3.0"
+chrono = "0.4.22"
+parking_lot = "0.12.1"
+textwrap = "0.16.0"

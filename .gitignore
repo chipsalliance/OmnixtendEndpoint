@@ -1,0 +1,8 @@
+.deps
+build/
+releases/
+Cargo.lock
+target/
+omniextend_endpoint_sim.h
+*.cap
+.bsv_tools
