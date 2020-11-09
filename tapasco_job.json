@@ -1,0 +1,57 @@
+{
+  "Slurm": false,
+  "Parallel": false,
+  "Jobs": [
+    {
+      "Job": "Compose",
+      "Design Frequency": 250,
+      "Platforms": [
+        "AU280"
+      ],
+      "Architectures": [
+        "axi4mm"
+      ],
+      "Composition": {
+        "Composition": [
+          {
+            "Kernel": "OmnixtendEndpoint_RES_15_RESTO_21_ACKTO_12_OX11_0_MAC_0_CON_8_MAXFRAME_1500_MAXTLFRAME_1_BRAMSIM_0",
+            "Count": 1
+          }
+        ]
+      },
+      "Features": [
+        {
+          "Feature": "SFPPLUS",
+          "Properties": {
+            "Ports": [
+              {
+                "name": "port_A",
+                "mode": "singular",
+                "physical_port": "0",
+                "ic_sync": false
+              }
+            ],
+            "PEs": [
+              {
+                "ID": "OmnixtendEndpoint_RES_15_RESTO_21_ACKTO_12_OX11_0_MAC_0_CON_8_MAXFRAME_1500_MAXTLFRAME_1_BRAMSIM_0",
+                "Count": "1",
+                "mappings": [
+                  {
+                    "interface": "sfp_axis_rx_0",
+                    "direction": "rx",
+                    "port": "port_A"
+                  },
+                  {
+                    "interface": "sfp_axis_tx_0",
+                    "direction": "tx",
+                    "port": "port_A"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

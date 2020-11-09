@@ -1,0 +1,24 @@
+#    SPDX-License-Identifier: Apache License 2.0
+#
+#    SPDX-FileCopyrightText: 2022 Western Digital Corporation or its affiliates.
+#
+#    Author: Jaco Hofmann (jaco.hofmann@wdc.com)
+
+[package]
+name = "omnixtend-rs"
+version = "1.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+atomic-option = "0.1.2"
+crossbeam = "0.8.2"
+dashmap = "5.4.0"
+log = "0.4.17"
+modular = "1.0.0"
+parking_lot = "0.12.1"
+pnet = {version="0.31.0", features=["std"]}
+pnet_macros = "0.31.0"
+pnet_macros_support = "0.31.0"
+snafu = "0.7.3"
