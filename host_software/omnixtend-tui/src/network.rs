@@ -40,7 +40,7 @@ impl Drop for Network {
 
 impl Network {
     pub fn new(ifcname: &str) -> Result<Self> {
-        let interface_names_match = |iface: &NetworkInterface| iface.name == ifcname;
+        let interface_names_match = |iface: &NetworkInterface| iface.name == ifcname.trim();
 
         let interfaces = datalink::interfaces();
         let interface = interfaces

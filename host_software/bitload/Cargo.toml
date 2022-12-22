@@ -9,18 +9,19 @@ name = "bitload"
 version = "1.0.0"
 authors = ["Jaco Hofmann <jaco.hofmann@wdc.com>"]
 edition = "2021"
+license = "Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 omnixtend-rs = { path = "../omnixtend-rs" }
 log = "0.4.17"
-snafu = "0.7.3"
+snafu = "0.7.4"
 env_logger = "0.10.0"
-clap = {version = "4.0.18", features = ["derive"]}
-pnet = {version = "0.31.0", features = ["std"]}
-ctrlc = "3.2.3"
+clap = { version = "4.0.29", features = ["derive"] }
+pnet = { version = "0.31.0", features = ["std"] }
+ctrlc = "3.2.4"
 log-panics = "2.1.0"
-humansize = "2.1.0"
-rayon = "1.5.3"
+humansize = "2.1.2"
+rayon = "1.6.1"
 memmap = "0.7.0"

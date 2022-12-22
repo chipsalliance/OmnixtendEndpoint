@@ -34,6 +34,8 @@ use std::io::{self, stdout, Stdout};
 use std::panic;
 use std::str::FromStr;
 use std::time::Duration;
+use time::macros::format_description;
+use time::OffsetDateTime;
 use tui::layout::Constraint;
 use tui::layout::Direction;
 use tui::layout::Layout;
@@ -296,7 +298,12 @@ impl Tui {
         self.get_log_write()?.push((
             format!(
                 "{}:{:?} => {}",
-                chrono::Local::now().format("%H:%M:%S"),
+                OffsetDateTime::now_local()
+                    .unwrap_or(OffsetDateTime::now_utc())
+                    .format(format_description!(
+                        "[hour]:[minute]:[second](UTC[offset_hour sign:mandatory]:[offset_minute])"
+                    ))
+                    .unwrap_or("NO_TIME".to_string()),
                 level,
                 msg
             ),
