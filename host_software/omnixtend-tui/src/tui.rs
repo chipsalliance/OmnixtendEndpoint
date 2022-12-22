@@ -35,7 +35,9 @@ use std::panic;
 use std::str::FromStr;
 use std::time::Duration;
 use time::macros::format_description;
+use time::macros::offset;
 use time::OffsetDateTime;
+use time::UtcOffset;
 use tui::layout::Constraint;
 use tui::layout::Direction;
 use tui::layout::Layout;
@@ -54,6 +56,7 @@ pub struct Tui {
     term: Mutex<Terminal<CrosstermBackend<Stdout>>>,
     log: RwLock<Vec<(String, Style)>>,
     cmdline_data: RwLock<Cmdline>,
+    tz_offset: UtcOffset,
 }
 
 struct Cmdline {
@@ -192,6 +195,12 @@ impl Tui {
 
         Self::setup_panic_hook();
 
+        let offset = if let Ok(t) = OffsetDateTime::now_local() {
+            t.offset()
+        } else {
+            offset!(UTC)
+        };
+
         let mut stdout = io::stdout();
         execute!(stdout, EnterAlternateScreen, EnableMouseCapture).context(IOSnafu)?;
         let backend = CrosstermBackend::new(stdout);
@@ -199,6 +208,7 @@ impl Tui {
         enable_raw_mode().context(IOSnafu)?;
 
         Ok(Self {
+            tz_offset: offset,
             term: Mutex::new(terminal),
             cmdline_data: RwLock::new(Cmdline::new()),
             log: RwLock::new(Vec::new()),
@@ -298,8 +308,8 @@ impl Tui {
         self.get_log_write()?.push((
             format!(
                 "{}:{:?} => {}",
-                OffsetDateTime::now_local()
-                    .unwrap_or(OffsetDateTime::now_utc())
+                OffsetDateTime::now_utc()
+                    .to_offset(self.tz_offset)
                     .format(format_description!(
                         "[hour]:[minute]:[second](UTC[offset_hour sign:mandatory]:[offset_minute])"
                     ))
