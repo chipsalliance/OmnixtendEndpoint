@@ -37,7 +37,6 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::{atomic::AtomicU64, Arc};
 use std::thread;
-use std::time;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -180,7 +179,7 @@ fn run(opts: &Opts) -> Result<()> {
         let frame_time = (1000000 / target_fps) as u128;
 
         loop {
-            let start = time::Instant::now();
+            let start = Instant::now();
 
             let mut constates = Vec::new();
             let mut cachestates = Vec::new();
@@ -215,7 +214,7 @@ fn run(opts: &Opts) -> Result<()> {
     let event_thread = thread::spawn(move || {
         let frame_time = (1000000 / target_fps) as u128;
         loop {
-            let start = time::Instant::now();
+            let start = Instant::now();
 
             if handle_tui_events(&tui_local, &event_tx_send).unwrap_or_else(|err| {
                 tui_local
@@ -526,7 +525,7 @@ fn ensure_fps(target_fps: u64, start: Instant, frame_time: u128) -> f64 {
     if wait_micros > 0 {
         let wait_milis = (wait_micros / 1000) - 1;
         if wait_milis >= 1 {
-            thread::sleep(time::Duration::from_millis(wait_milis as u64));
+            thread::sleep(Duration::from_millis(wait_milis as u64));
         }
         while start.elapsed().as_micros() < frame_time {
             thread::yield_now();
@@ -553,6 +552,6 @@ fn main() {
 
     match run(&opts) {
         Ok(_) => (),
-        Err(e) => error!("ERROR: {:?}", e),
+        Err(e) => error!("ERROR: {}", e),
     }
 }

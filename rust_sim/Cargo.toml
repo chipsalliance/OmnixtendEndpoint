@@ -10,6 +10,7 @@ authors = ["Jaco Hofmann <jaco.hofmann@wdc.com>"]
 edition = "2021"
 name = "omnixtend_endpoint_sim"
 version = "1.0.0"
+license = "Apache-2.0"
 
 [lib]
 crate-type = ["rlib", "staticlib"]
@@ -18,14 +19,14 @@ crate-type = ["rlib", "staticlib"]
 cbindgen = "0.24.3"
 
 [dependencies]
-clap = {version="4.0.18", features=["derive"]}
+clap = { version = "4.0.29", features = ["derive"] }
 crossbeam = "0.8.2"
-ctrlc = "3.2.3"
+ctrlc = "3.2.4"
 env_logger = "0.10.0"
-libc = "0.2.137"
+libc = "0.2.138"
 log = "0.4.17"
 parking_lot = "0.12.1"
-pnet = {version="0.31.0", features=["std"]}
+pnet = { version = "0.31.0", features = ["std"] }
 rand = "0.8.5"
-snafu = "0.7.3"
+snafu = "0.7.4"
 omnixtend-rs = {path="../host_software/omnixtend-rs"}
