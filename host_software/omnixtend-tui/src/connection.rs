@@ -79,9 +79,11 @@ impl Connection {
     }
 
     pub fn disconnect(&self) {
+        debug!("Clearing cache.");
         if let Err(e) = self.cache_release() {
             error!("Could not clear cache: {}", e);
         }
+        debug!("Closing connection.");
         if let Err(e) = self
             .connection
             .close_connection(Some(Duration::from_millis(500)))
@@ -116,18 +118,31 @@ impl Connection {
     }
 
     pub fn cache_release(&self) -> Result<()> {
+        self.reject_inactive()?;
+
         self.cache
             .release(&self.operations, self.connection.credits())
             .context(CacheSnafu)
     }
 
+    fn reject_inactive(&self) -> Result<()> {
+        if !self.connection.is_active() {
+            return Err(Error::ConnectionNotActive {});
+        }
+        Ok(())
+    }
+
     pub fn cache_release_single(&self, addr: u64) -> Result<()> {
+        self.reject_inactive()?;
+
         self.cache
             .release_addr(&self.operations, self.connection.credits(), addr)
             .context(CacheSnafu)
     }
 
     pub fn cache_read(&self, addr: u64) -> Result<u64> {
+        self.reject_inactive()?;
+
         let addr = addr - self.addr;
         self.cache
             .read(&self.operations, &self.connection.credits(), addr)
@@ -135,6 +150,8 @@ impl Connection {
     }
 
     pub fn cache_write(&self, addr: u64, data: u64) -> Result<()> {
+        self.reject_inactive()?;
+
         let addr = addr - self.addr;
         self.cache
             .write(&self.operations, &self.connection.credits(), addr, data)
@@ -142,6 +159,8 @@ impl Connection {
     }
 
     pub fn read(&self, addr: u64) -> Result<u64> {
+        self.reject_inactive()?;
+
         let addr = addr - self.addr;
 
         match self
@@ -158,6 +177,8 @@ impl Connection {
     }
 
     pub fn write(&self, addr: u64, data: u64) -> Result<()> {
+        self.reject_inactive()?;
+
         let addr = addr - self.addr;
         self.operations
             .perform(

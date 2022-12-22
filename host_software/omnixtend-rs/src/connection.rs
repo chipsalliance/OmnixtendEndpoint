@@ -30,7 +30,7 @@ use std::time::Instant;
 
 #[derive(Debug, Snafu)]
 pub enum Error {
-    #[snafu(display("Terminate connection not allowed in compat mode."))]
+    #[snafu(display("Terminate connection not allowed in compat mode or on idle connections."))]
     CompatModeClose {},
 
     #[snafu(display("Cache Error: {}", source))]
@@ -57,6 +57,9 @@ pub enum Error {
 
     #[snafu(display("No resend data available."))]
     NoResendData {},
+
+    #[snafu(display("Resend already in progress."))]
+    ResendInProgress {},
 
     #[snafu(display("Received invalid ethernet packet."))]
     NotEthernetPacket {},
@@ -188,6 +191,10 @@ impl Connection {
         } else {
             error!("Sim {}: Connection already active.", self.id);
         }
+    }
+
+    pub fn is_active(&self) -> bool {
+        self.connection_state.load() == ConnectionState::Active
     }
 
     fn initiate_close_connection(&self) -> Result<()> {
@@ -413,8 +420,12 @@ impl Connection {
     }
 
     pub fn resend(&self) -> Result<()> {
-        if self.resend_buffer.read().len() == 0 {
+        if self.resend_buffer.read().is_empty() {
             Err(Error::NoResendData {})?;
+        }
+
+        if !self.resend_data.is_empty() {
+            Err(Error::ResendInProgress {})?;
         }
 
         let pkts = self
@@ -605,7 +616,6 @@ impl Connection {
     pub fn ack_outstanding(&self) -> bool {
         // First ACK or any other ACK or NAK
         self.we_acked.val() != self.last_rx_seq.val()
-            || !self.last_ack_status.load(Ordering::Relaxed)
     }
 
     pub fn resend_outstanding(&self) -> bool {
