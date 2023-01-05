@@ -12,12 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "atomic-option"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0db678acb667b525ac40a324fc5f7d3390e29239b31c7327bb8157f5b4fff593"
-
-[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -454,7 +448,6 @@ checksum = "43794a0ace135be66a25d3ae77d41b91615fb68ae937f904090203e81f755b65"
 name = "omnixtend-rs"
 version = "1.0.0"
 dependencies = [
- "atomic-option",
  "crossbeam",
  "dashmap",
  "log",
