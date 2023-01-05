@@ -40,13 +40,9 @@ impl Drop for Network {
 
 impl Network {
     pub fn new(ifcname: &str) -> Result<Self> {
-        let interface_names_match = |iface: &NetworkInterface| iface.name == ifcname.trim();
-
-        let interfaces = datalink::interfaces();
-        let interface = interfaces
+        let interface = datalink::interfaces()
             .into_iter()
-            .filter(interface_names_match)
-            .next()
+            .find(|iface| iface.name == ifcname.trim())
             .ok_or(Error::InterfaceNotFound {
                 name: ifcname.to_string(),
             })?;
@@ -60,6 +56,7 @@ impl Network {
             Some(m) => m,
             None => MacAddr(0, 0, 0, 0, 0, 1),
         };
+
         let (mut tx, mut rx) = match datalink::channel(&interface, config) {
             Ok(Ethernet(tx, rx)) => (tx, rx),
             Ok(_) => return Err(Error::UnhandledChannelType {}),
