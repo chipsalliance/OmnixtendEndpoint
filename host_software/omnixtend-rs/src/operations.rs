@@ -11,8 +11,11 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-use atomic_option::AtomicOption;
-use crossbeam::{queue::SegQueue, utils::Backoff};
+use crossbeam::{
+    channel::{bounded, Receiver, Sender},
+    queue::SegQueue,
+    utils::Backoff,
+};
 use parking_lot::Mutex;
 
 use crate::{
@@ -25,7 +28,7 @@ use crate::{
     utils::chunkize_packet,
 };
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, PartialEq, Eq, Clone, Copy)]
 pub enum Error {
     #[snafu(display(
         "Operations can only performed on power of two data sizes: {} Bytes.",
@@ -35,6 +38,9 @@ pub enum Error {
 
     #[snafu(display("Access is not aligned with data size."))]
     UnalignedAccess {},
+
+    #[snafu(display("Did not receive response. Connection most likely closed."))]
+    ConnectionClosed {},
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -494,7 +500,8 @@ impl TLResult {
 
 pub struct Operations {
     available_sources: SegQueue<OmnixtendSource>,
-    operation_completions: Vec<AtomicOption<(u32, Result<Vec<u8>>)>>,
+    operation_completions_send: Vec<Sender<(u32, Result<Vec<u8>>)>>,
+    operation_completions_recv: Vec<Receiver<(u32, Result<Vec<u8>>)>>,
     operations_outstanding: Mutex<Vec<Vec<u8>>>,
     outstanding_cntr: AtomicUsize,
 }
@@ -502,15 +509,19 @@ pub struct Operations {
 impl Operations {
     pub fn new() -> Self {
         let available_sources = SegQueue::new();
-        let mut operation_completions = Vec::new();
+        let mut operation_completions_send = Vec::new();
+        let mut operation_completions_recv = Vec::new();
 
         (0..255).for_each(|i| {
             available_sources.push(i);
-            operation_completions.push(AtomicOption::empty());
+            let (s, r) = bounded(1);
+            operation_completions_send.push(s);
+            operation_completions_recv.push(r);
         });
         Operations {
-            available_sources: available_sources,
-            operation_completions: operation_completions,
+            available_sources,
+            operation_completions_send,
+            operation_completions_recv,
             operations_outstanding: Mutex::new(Vec::new()),
             outstanding_cntr: AtomicUsize::new(0),
         }
@@ -533,7 +544,9 @@ impl Operations {
             self.available_sources.push(source);
             self.outstanding_cntr.fetch_sub(1, Ordering::Relaxed);
 
-            self.send_response(operation, sink, credits);
+            if ret != Err(Error::ConnectionClosed {}) {
+                self.send_response(operation, sink, credits);
+            }
 
             self.extract_response(ret, operation)
         } else {
@@ -543,7 +556,12 @@ impl Operations {
     }
 
     fn wait_for_response(&self, source: u32) -> (u32, Result<Vec<u8>, Error>) {
-        *self.operation_completions[source as usize].spinlock(Ordering::SeqCst)
+        self.operation_completions_recv[source as usize]
+            .recv()
+            .unwrap_or_else(|_v| {
+                trace!("Sender has been closed. Program is most likely terminating. Returning dummy data.");
+                (0, Err(Error::ConnectionClosed{} ))
+            })
     }
 
     fn extract_response(
@@ -607,17 +625,16 @@ impl Operations {
         }
     }
 
-    fn ensure_store<T>(store: &[AtomicOption<T>], source: u32, mut v: Box<T>) {
-        let b = Backoff::new();
-        while let Some(n_v) = store[source as usize].try_store(v, Ordering::SeqCst) {
-            v = n_v;
-            b.snooze();
-        }
-    }
-
     pub fn complete(&self, source: u32, sink: u32, r: Result<Vec<u8>>) {
+        if self.operation_completions_send.is_empty() {
+            trace!("Cannot complete transaction on closed connection.");
+            return;
+        }
+
         trace!("Completing source {} sink {} result {:?}", source, sink, r);
-        Self::ensure_store(&self.operation_completions, source, Box::new((sink, r)));
+        self.operation_completions_send[source as usize]
+            .send((sink, r))
+            .unwrap();
     }
 
     pub fn num_outstanding(&self) -> usize {

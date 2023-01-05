@@ -117,6 +117,9 @@ pub enum Error {
 
     #[snafu(display("BUG: Operation returned the wrong data type."))]
     WrongReturnType {},
+
+    #[snafu(display("Cannot perform operation on inactive connection."))]
+    ConnectionNotActive {},
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -274,10 +277,12 @@ fn run(opts: &Opts) -> Result<()> {
         )
     });
 
+    debug!("Closing connections.");
     for c in connections.iter() {
         c.value().disconnect();
     }
 
+    debug!("Waiting for connections to stop.");
     let mut idle = false;
     while !idle {
         idle = true;
@@ -289,6 +294,7 @@ fn run(opts: &Opts) -> Result<()> {
         }
     }
 
+    debug!("All done, closing threads.");
     ctrl_c_pressed.store(true, Ordering::Relaxed);
     draw_thread.join().unwrap_or_else(|e| {
         error!(

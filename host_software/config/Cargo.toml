@@ -18,7 +18,7 @@ tapasco = { git = "https://github.com/esa-tu-darmstadt/tapasco.git", branch = "m
 log = "0.4.17"
 snafu = "0.7.4"
 env_logger = "0.10.0"
-clap = { version = "4.0.29", features = ["derive"] }
+clap = { version = "4.0.32", features = ["derive"] }
 ctrlc = "3.2.4"
-prettytable-rs = "0.9.0"
+prettytable-rs = "0.10.0"
 pnet = "0.31.0"
