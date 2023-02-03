@@ -19,7 +19,7 @@ log = "0.4.17"
 snafu = "0.7.4"
 env_logger = "0.10.0"
 clap = { version = "4.0.29", features = ["derive"] }
-pnet = { version = "0.31.0", features = ["std"] }
+pnet = { version = "0.33.0", features = ["std"] }
 ctrlc = "3.2.4"
 crossbeam = "0.8.2"
 tui = "0.19.0"

@@ -19,10 +19,8 @@ use crate::Result;
 use crossbeam::queue::SegQueue;
 use pnet::datalink;
 use pnet::datalink::Channel::Ethernet;
-use pnet::datalink::NetworkInterface;
 use pnet::util::MacAddr;
 use snafu::ResultExt;
-
 pub struct Network {
     tx_queue: Arc<SegQueue<Vec<u8>>>,
     rx_queue: Arc<SegQueue<Vec<u8>>>,
