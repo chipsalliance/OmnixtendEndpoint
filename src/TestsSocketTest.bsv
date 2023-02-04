@@ -265,7 +265,7 @@ package TestsSocketTest;
                 $display("Hello World from the testbench.");
                 sim_init_logging();
                 action
-                    let p <- socket_new("NOTHING --ethernet-port veth1 --reliability-send 1.0 --reliability-receive 1.0");
+                    let p <- socket_new("NOTHING --ethernet-port veth0 --reliability-send 1.0 --reliability-receive 1.0");
                     sim_ptr <= p;
                     sim_ptr_rx_0 <= p;
                     sim_ptr_tx_0 <= p;
