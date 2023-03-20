@@ -246,9 +246,14 @@ module mkWriteBurstHandler(WriteBurstHandler);
             outstanding_requests.enq(tuple2(escapeAddrForAXI(addr), cExtend(beats)));
         end
 
-        // Assuming 8192 Bytes as the Maximum -> 2 AXI Requests
+        // Assuming 12288 Bytes as the Maximum -> 3 AXI Requests
         let requests = 1;
-        if(beats > fromInteger(valueOf(MaximumAXIBeats))) begin
+        if(beats > fromInteger(3*valueOf(MaximumAXIBeats))) begin
+            printColorTimed(RED, $format("ERROR: WRITE_HANDLER transfer started with too many beats %d > %d", beats, fromInteger(3*valueOf(MaximumAXIBeats))));
+            $finish;
+        end else if(beats > fromInteger(2*valueOf(MaximumAXIBeats))) begin
+            requests = 3;
+        end else if(beats > fromInteger(valueOf(MaximumAXIBeats))) begin
             requests = 2;
         end
 
