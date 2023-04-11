@@ -90,12 +90,16 @@ module mkOmnixtendEndpoint#(Clock sfp_axis_rx_aclk_0, Reset sfp_axis_rx_aresetn_
         receiver.setConnectionDone(r);
     endrule
 
-    rule forward_state_changes;
+    rule forward_connection_state;
         sender.setConnectionState(receiver.getConnectionState());
         parser.setConnectionState(receiver.getConnectionState());
     endrule
 
-    mkConnection(receiver.getStateChange, sender.putStateChange);
+    rule forward_state_changes;
+        let sc <- receiver.getStateChange.get();
+        sender.putStateChange.put(sc);
+        parser.putStateChange.put(sc);
+    endrule
 
     rule update_mac;
         receiver.setMac(my_mac);
