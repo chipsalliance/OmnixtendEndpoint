@@ -1,6 +1,7 @@
 ###
 # DO NOT CHANGE
 ###
+BRAM_SIM?=0
 ifeq (${BRAM_SIM}, 1)
 TOP_MODULE=mkOmnixtendEndpointBRAM
 MAIN_MODULE=OmnixtendEndpointBRAM
@@ -13,7 +14,7 @@ IGNORE_MODULES=mkTestbench mkTestsMainTest
 TESTBENCH_FILE=src/Testbench.bsv
 
 # Initialize
-include .bsv_tools
+-include .bsv_tools
 ifndef BSV_TOOLS
 	$(error BSV_TOOLS is not set (Check .bsv_tools or specify it through the command line))
 endif
