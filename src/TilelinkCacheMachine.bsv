@@ -255,7 +255,7 @@ module mkTilelinkCacheMachine#(Bit#(26) id)(TilelinkCacheMachine);
             let m = OmnixtendMessageABCD {
                 reserved: 0,
                 chan: D,
-                opcode: pack(GrantData),
+                opcode: pack(Grant),
                 reserved2: 0,
                 param: current_op.param == pack(NtoB) ? pack(ToB) : pack(ToT),
                 size: current_op.size,
