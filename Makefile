@@ -1,6 +1,7 @@
 ###
 # DO NOT CHANGE
 ###
+BRAM_SIM?=0
 ifeq (${BRAM_SIM}, 1)
 TOP_MODULE=mkOmnixtendEndpointBRAM
 MAIN_MODULE=OmnixtendEndpointBRAM
