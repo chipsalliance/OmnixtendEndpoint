@@ -176,7 +176,7 @@ module mkWriteBurstHandler(WriteBurstHandler);
 
         if(flit_cntr_t == 0 || beat_cntr_t + 1 == 0) begin
             Bool last_cntr_set = False;
-            if(last_cntr == fromInteger(valueOf(MaximumAXIBeats))) begin
+            if(last_cntr == fromInteger(valueOf(MaximumAXIBeats)) - 1) begin
                 last_cntr_t = 0;
                 last_cntr_set = True;
             end else begin
