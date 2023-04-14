@@ -176,7 +176,7 @@ module mkWriteBurstHandler(WriteBurstHandler);
 
         if(flit_cntr_t == 0 || beat_cntr_t + 1 == 0) begin
             Bool last_cntr_set = False;
-            if(last_cntr == fromInteger(valueOf(MaximumAXIBeats))) begin
+            if(last_cntr == fromInteger(valueOf(MaximumAXIBeats)) - 1) begin
                 last_cntr_t = 0;
                 last_cntr_set = True;
             end else begin
@@ -246,11 +246,9 @@ module mkWriteBurstHandler(WriteBurstHandler);
             outstanding_requests.enq(tuple2(escapeAddrForAXI(addr), cExtend(beats)));
         end
 
-        // Assuming 8192 Bytes as the Maximum -> 2 AXI Requests
-        let requests = 1;
-        if(beats > fromInteger(valueOf(MaximumAXIBeats))) begin
-            requests = 2;
-        end
+        // calculate number of required requests to write all data beats
+        // based on AXI bursts with maximum length
+        let requests = ((beats-1) / fromInteger(valueOf(MaximumAXIBeats)) + 1);
 
         let out_res = tagged Valid cExtend(requests);
         if(denied) begin
