@@ -182,6 +182,7 @@ module mkOmnixtendReceiver#(Bit#(32) base_name, Clock rx_clk, Reset rx_rst, Bool
             end else begin
                 con_act = free_idx.Valid;
                 next_state = TLOE_HEADER;
+                next_rx_seq[con_act] <= 0;
                 con_state[con_act] <= ConnectionState {status: IDLE, mac: toggleEndianess(h.mac_src)};
             end
             printColorTimed(GREEN, $format("RECV: Continue with header parsing with state ", fshow(next_state) ," for connection %d.", con_act));
@@ -206,7 +207,6 @@ module mkOmnixtendReceiver#(Bit#(32) base_name, Clock rx_clk, Reset rx_rst, Bool
             if(c.status == CLOSED_BY_CLIENT) begin
                 c.status = IDLE;
                 state_change_fifo.enq(tuple2(con, Disabled));
-                next_rx_seq[con] <= 0;
             end else begin
                 c.status = CLOSED_BY_HOST_WAITING_FOR_REQUESTS;
             end
@@ -229,7 +229,6 @@ module mkOmnixtendReceiver#(Bit#(32) base_name, Clock rx_clk, Reset rx_rst, Bool
                 let c = con_state[con];
                 c.status = IDLE;
                 state_change_fifo.enq(tuple2(fromInteger(con), Disabled));
-                next_rx_seq[con] <= 0;
                 con_state[con] <= c;
                 printColorTimed(RED, $format("RECV: CH Connection %d closed.", con));
             endrule
@@ -241,7 +240,6 @@ module mkOmnixtendReceiver#(Bit#(32) base_name, Clock rx_clk, Reset rx_rst, Bool
         let c = con_state[con];
         c.status = IDLE;
         state_change_fifo.enq(tuple2(con, Disabled));
-        next_rx_seq[con] <= 0;
         con_state[con] <= c;
         reset_con_pcie <= 0;
     endrule
