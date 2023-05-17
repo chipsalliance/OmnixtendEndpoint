@@ -19,7 +19,7 @@ import BUtils :: *;
 import Clocks :: *;
 import Connectable :: *;
 
-import OmnixtendEndpointTypes :: *;
+import OmnixtendTypes :: *;
 import TimeoutHandler :: *;
 import StatusRegHandler :: *;
 import OmnixtendSenderResend :: *;
@@ -63,7 +63,7 @@ endinterface
 `ifdef SYNTH_MODULES
 (* synthesize *)
 `endif
-module mkOmnixtendSender#(Bit#(32) base_name, Clock tx_clk, Reset tx_rst)(OmnixtendSender);
+module mkOmnixtendSender#(Bit#(32) base_name, Clock tx_clk, Reset tx_rst, Bool config_per_connection)(OmnixtendSender);
     StatusRegHandlerOmnixtend status_registers = Nil;
 
     let eth_out_impl <- mkAXI4_Stream_Wr(16, clocked_by tx_clk, reset_by tx_rst);
@@ -108,8 +108,8 @@ module mkOmnixtendSender#(Bit#(32) base_name, Clock tx_clk, Reset tx_rst)(Omnixt
         end
     endrule
 
-    OmnixtendSenderResend resend_handler <- mkOmnixtendSenderResend();
-    OmnixtendSenderPacketBuilder packet_builder <- mkOmnixtendSenderPacketBuilder(base_name);
+    OmnixtendSenderResend resend_handler <- mkOmnixtendSenderResend(config_per_connection);
+    OmnixtendSenderPacketBuilder packet_builder <- mkOmnixtendSenderPacketBuilder(base_name, config_per_connection);
 
     rule update_resend_buffer_count;
         packet_builder.setResendBufferCount(resend_handler.getResendBufferCount());

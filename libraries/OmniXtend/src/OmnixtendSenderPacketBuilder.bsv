@@ -24,7 +24,7 @@ import BlueLib :: *;
 import BlueAXI :: *;
 
 import StatusRegHandler :: *;
-import OmnixtendEndpointTypes :: *;
+import OmnixtendTypes :: *;
 import TimeoutHandler :: *;
 import OmnixtendCreditHandler :: *;
 import BufferedBRAMFIFO :: *;
@@ -107,7 +107,7 @@ endinterface
 `ifdef SYNTH_MODULES
 (* synthesize *)
 `endif
-module mkOmnixtendSenderPacketBuilder#(Bit#(32) base_name)(OmnixtendSenderPacketBuilder);
+module mkOmnixtendSenderPacketBuilder#(Bit#(32) base_name, Bool config_per_connection)(OmnixtendSenderPacketBuilder);
     Wire#(Mac) my_mac <- mkBypassWire();
 
     Vector#(OmnixtendConnections, Wire#(ConnectionState)) con_state <- replicateM(mkBypassWire());
@@ -169,7 +169,7 @@ module mkOmnixtendSenderPacketBuilder#(Bit#(32) base_name)(OmnixtendSenderPacket
         send_pending[i].credit <- mkCReg(send_pending_stages_credit, False);
         send_pending[i].channel_nr = fromInteger(i % valueOf(SenderOutputChannels));
 
-        if(valueOf(PER_CONNECTION_CONFIG_REGS) == 1) begin
+        if(config_per_connection) begin
             status_registers = addPerfCntr({base_name, buildId("PKS" + integerToString(i))}, packets_started[i], status_registers);
             status_registers = addPerfCntr({base_name, buildId("PKE" + integerToString(i))}, packets_ethernet_headers[i], status_registers);
             status_registers = addPerfCntr({base_name, buildId("PKC" + integerToString(i))}, packets_completed[i], status_registers);
@@ -374,7 +374,7 @@ module mkOmnixtendSenderPacketBuilder#(Bit#(32) base_name)(OmnixtendSenderPacket
         return flit_counter[0] + len + 1;
     endfunction
 
-    function canRequestNewFlits(FlitsPerPacketCounterType flits_after);
+    function Bool canRequestNewFlits(FlitsPerPacketCounterType flits_after);
         return mask_add_mask[0] != 0 && remaining_resend_space_active >= cExtend(flits_after) && flits_after <= fromInteger(valueOf(MAX_FLITS_PER_PACKET)) && message_starts[0] != 0;
     endfunction
 

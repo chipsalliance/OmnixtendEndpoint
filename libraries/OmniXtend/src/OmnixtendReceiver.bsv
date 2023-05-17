@@ -20,7 +20,7 @@ import Probe :: *;
 import BlueLib :: *;
 import BlueAXI :: *;
 
-import OmnixtendEndpointTypes :: *;
+import OmnixtendTypes :: *;
 import StatusRegHandler :: *;
 
 /*
@@ -61,7 +61,7 @@ endinterface
 `ifdef SYNTH_MODULES
 (* synthesize *)
 `endif
-module mkOmnixtendReceiver#(Bit#(32) base_name, Clock rx_clk, Reset rx_rst)(OmnixtendReceiver);
+module mkOmnixtendReceiver#(Bit#(32) base_name, Clock rx_clk, Reset rx_rst, Bool config_per_connection)(OmnixtendReceiver);
     Wire#(Mac) my_mac <- mkWire();
     Vector#(OmnixtendConnections, Reg#(ConnectionState)) con_state <- replicateM(mkReg(ConnectionState{mac: 0, status: IDLE}));
 
@@ -115,7 +115,7 @@ module mkOmnixtendReceiver#(Bit#(32) base_name, Clock rx_clk, Reset rx_rst)(Omni
     Reg#(Bit#(32)) reset_con_pcie <- mkReg(0);
     status_registers = addRegister({base_name, buildId(" RST")}, reset_con_pcie, status_registers);
 
-    if(valueOf(PER_CONNECTION_CONFIG_REGS) == 1) begin
+    if(config_per_connection) begin
         for(Integer i = 0; i < valueOf(OmnixtendConnections); i = i + 1) begin
             status_registers = addRegisterRO({base_name, buildId(" RX" + integerToString(i))}, next_rx_seq[i], status_registers);
             status_registers = addVal({base_name, buildId(" ST" + integerToString(i))}, con_state[i].status, status_registers);

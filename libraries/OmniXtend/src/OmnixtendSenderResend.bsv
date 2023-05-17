@@ -20,7 +20,7 @@ import BRAMFIFOCount :: *;
 import BUtils :: *;
 import BRAM :: *;
 
-import OmnixtendEndpointTypes :: *;
+import OmnixtendTypes :: *;
 import StatusRegHandler :: *;
 import TimeoutHandler :: *;
 import UIntCounter :: *;
@@ -64,7 +64,7 @@ endinterface
 `ifdef SYNTH_MODULES
 (* synthesize *)
 `endif
-module mkOmnixtendSenderResend(OmnixtendSenderResend);
+module mkOmnixtendSenderResend#(Bool config_per_connection)(OmnixtendSenderResend);
     StatusRegHandlerOmnixtend status_registers = Nil;
     Vector#(OmnixtendConnections, Wire#(ConnectionState)) con_state <- replicateM(mkBypassWire());
 
@@ -99,7 +99,7 @@ module mkOmnixtendSenderResend(OmnixtendSenderResend);
         per_connection_data[con].doResend <- mkReg(False);
         per_connection_data[con].resend_buffer_first_element <- mkReg(unpack(-1));
 
-        if(valueOf(PER_CONNECTION_CONFIG_REGS) == 1) begin
+        if(config_per_connection) begin
             status_registers = addRegisterRO(buildId("RBUFDR" + integerToString(con)), per_connection_data[con].doResend, status_registers);
             status_registers = addRegisterRO(buildId("RBUFAK" + integerToString(con)), per_connection_data[con].ackd_seq, status_registers);
         end

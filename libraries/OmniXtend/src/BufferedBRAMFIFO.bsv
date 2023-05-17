@@ -15,7 +15,7 @@ import BRAMFIFO :: *;
 import Connectable :: *;
 import GetPut :: *;
 
-import OmnixtendEndpointTypes :: *;
+import OmnixtendTypes :: *;
 import StatusRegHandler :: *;
 
 /*

@@ -21,7 +21,7 @@ import RegFile :: *;
 
 import BlueLib :: *;
 
-import OmnixtendEndpointTypes :: *;
+import OmnixtendTypes :: *;
 import UIntCounter :: *;
 
 /*

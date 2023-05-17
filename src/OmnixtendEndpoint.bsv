@@ -55,28 +55,37 @@ typedef enum {
 } ConfigOperation deriving(Bits, Eq, FShow);
 
 interface OmnixtendEndpoint;
-    (*prefix="sconfig_axi"*)interface AXI4_Lite_Slave_Rd_Fab#(AXI_CONFIG_ADDR_WIDTH, AXI_CONFIG_DATA_WIDTH) s_rd;
-    (*prefix="sconfig_axi"*)interface AXI4_Lite_Slave_Wr_Fab#(AXI_CONFIG_ADDR_WIDTH, AXI_CONFIG_DATA_WIDTH) s_wr;
+    (*prefix="sconfig_axi"*)interface AXI4_Lite_Slave_Rd_Fab#(AXI_CONFIG_ADDR_WIDTH, 
+                                                              AXI_CONFIG_DATA_WIDTH) s_rd;
+    (*prefix="sconfig_axi"*)interface AXI4_Lite_Slave_Wr_Fab#(AXI_CONFIG_ADDR_WIDTH, 
+                                                              AXI_CONFIG_DATA_WIDTH) s_wr;
     (*always_ready*) method Bool interrupt();
 
-    (*prefix="M_AXI"*)interface AXI4_Master_Rd_Fab#(AXI_MEM_ADDR_WIDTH, AXI_MEM_DATA_WIDTH, AXI_MEM_ID_WIDTH, AXI_MEM_USER_WIDTH) m_rd;
-    (*prefix="M_AXI"*)interface AXI4_Master_Wr_Fab#(AXI_MEM_ADDR_WIDTH, AXI_MEM_DATA_WIDTH, AXI_MEM_ID_WIDTH, AXI_MEM_USER_WIDTH) m_wr;
+    (*prefix="M_AXI"*)interface AXI4_Master_Rd_Fab#(AXI_MEM_ADDR_WIDTH, AXI_MEM_DATA_WIDTH, 
+                                                    AXI_MEM_ID_WIDTH, AXI_MEM_USER_WIDTH) m_rd;
+    (*prefix="M_AXI"*)interface AXI4_Master_Wr_Fab#(AXI_MEM_ADDR_WIDTH, AXI_MEM_DATA_WIDTH, 
+                                                    AXI_MEM_ID_WIDTH, AXI_MEM_USER_WIDTH) m_wr;
 
-    (*prefix="sfp_axis_tx_0"*)interface AXI4_Stream_Wr_Fab#(ETH_STREAM_DATA_WIDTH,  ETH_STREAM_USER_WIDTH) eth_out;
-    (*prefix="sfp_axis_rx_0"*)interface AXI4_Stream_Rd_Fab#(ETH_STREAM_DATA_WIDTH,  ETH_STREAM_USER_WIDTH) eth_in;
+    (*prefix="sfp_axis_tx_0"*)interface AXI4_Stream_Wr_Fab#(ETH_STREAM_DATA_WIDTH,  
+                                                            ETH_STREAM_USER_WIDTH) eth_out;
+    (*prefix="sfp_axis_rx_0"*)interface AXI4_Stream_Rd_Fab#(ETH_STREAM_DATA_WIDTH,  
+                                                            ETH_STREAM_USER_WIDTH) eth_in;
 endinterface
 
 `ifdef SYNTH_MODULES
 (* synthesize *)
 `endif
-(* clock_prefix = "", reset_prefix="", default_clock_osc="sconfig_axi_aclk", default_reset="sconfig_axi_aresetn" *)
+(* clock_prefix = "", reset_prefix="", default_clock_osc="sconfig_axi_aclk", 
+                                       default_reset="sconfig_axi_aresetn" *)
 module mkOmnixtendEndpoint#(Clock sfp_axis_rx_aclk_0, Reset sfp_axis_rx_aresetn_0, 
                             Clock sfp_axis_tx_aclk_0, Reset sfp_axis_tx_aresetn_0)(OmnixtendEndpoint);
 
-    messageM("Packet Info: Minimum flits: " + integerToString(valueOf(MIN_FLITS_PER_PACKET)) + " Maximum flits: " + integerToString(valueOf(MAX_FLITS_PER_PACKET)) + " Empty packet size bytes: " + integerToString(valueOf(OMNIXTEND_EMPTY_PACKET_SIZE_BYTES)));
+    messageM("Packet Info: Minimum flits: " + integerToString(valueOf(MIN_FLITS_PER_PACKET)) + 
+             " Maximum flits: " + integerToString(valueOf(MAX_FLITS_PER_PACKET)) + 
+             " Empty packet size bytes: " + integerToString(valueOf(OMNIXTEND_EMPTY_PACKET_SIZE_BYTES)));
  
-    let receiver <- mkOmnixtendReceiver(buildId("RECV"), sfp_axis_rx_aclk_0, sfp_axis_rx_aresetn_0);
-    let sender <- mkOmnixtendSender(buildId("SEND"), sfp_axis_tx_aclk_0, sfp_axis_tx_aresetn_0);
+    let receiver <- mkOmnixtendReceiver(buildId("RECV"), sfp_axis_rx_aclk_0, sfp_axis_rx_aresetn_0, valueOf(PER_CONNECTION_CONFIG_REGS) == 1);
+    let sender <- mkOmnixtendSender(buildId("SEND"), sfp_axis_tx_aclk_0, sfp_axis_tx_aresetn_0, valueOf(PER_CONNECTION_CONFIG_REGS) == 1);
     let parser <- mkTilelinkHandler(buildId("PARS"));
 
     Reg#(Mac) my_mac <- mkReg(fromInteger(valueOf(MyMac)));
