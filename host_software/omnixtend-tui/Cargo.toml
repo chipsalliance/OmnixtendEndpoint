@@ -15,19 +15,19 @@ license = "Apache-2.0"
 
 [dependencies]
 omnixtend-rs = { path = "../omnixtend-rs" }
-log = "0.4.17"
+log = "0.4.19"
 snafu = "0.7.4"
 env_logger = "0.10.0"
-clap = { version = "4.0.29", features = ["derive"] }
+clap = { version = "4.3.11", features = ["derive"] }
 pnet = { version = "0.33.0", features = ["std"] }
-ctrlc = "3.2.4"
+ctrlc = "3.4.0"
 crossbeam = "0.8.2"
 crossterm = "0.25.0"
-regex = "1.7.0"
+regex = "1.9.0"
 dashmap = "5.4.0"
-human_bytes = "0.4.1"
+human_bytes = "0.4.2"
 better-panic = "0.3.0"
 parking_lot = "0.12.1"
 textwrap = "0.16.0"
-time = {version = "0.3.17", features = ["formatting", "local-offset", "macros"]}
+time = {version = "0.3.22", features = ["formatting", "local-offset", "macros"]}
 ratatui = "0.20.1"
