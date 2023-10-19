@@ -16,7 +16,7 @@ license = "Apache-2.0"
 crate-type = ["rlib", "staticlib"]
 
 [build-dependencies]
-cbindgen = "0.24.5"
+cbindgen = "0.26.0"
 
 [dependencies]
 clap = { version = "4.3.11", features = ["derive"] }
@@ -29,4 +29,4 @@ parking_lot = "0.12.1"
 pnet = { version = "0.33.0", features = ["std"] }
 rand = "0.8.5"
 snafu = "0.7.4"
-omnixtend-rs = {path="../host_software/omnixtend-rs"}
+omnixtend-rs = { path = "../host_software/omnixtend-rs" }
