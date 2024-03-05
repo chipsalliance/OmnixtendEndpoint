@@ -16,10 +16,10 @@ license = "Apache-2.0"
 [dependencies]
 omnixtend-rs = { path = "../omnixtend-rs" }
 log = "0.4.19"
-snafu = "0.7.4"
-env_logger = "0.10.0"
+snafu = "0.8.1"
+env_logger = "0.11.3"
 clap = { version = "4.3.11", features = ["derive"] }
-pnet = { version = "0.33.0", features = ["std"] }
+pnet = { version = "0.34.0", features = ["std"] }
 ctrlc = "3.4.0"
 log-panics = "2.1.0"
 humansize = "2.1.3"

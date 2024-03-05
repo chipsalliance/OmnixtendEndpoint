@@ -31,8 +31,8 @@ use ratatui::layout::Constraint;
 use ratatui::layout::Direction;
 use ratatui::layout::Layout;
 use ratatui::style::{Color, Style};
+use ratatui::text::Line;
 use ratatui::text::Span;
-use ratatui::text::Spans;
 use ratatui::text::Text;
 use ratatui::widgets::List;
 use ratatui::widgets::ListItem;
@@ -252,7 +252,7 @@ impl Tui {
     }
 
     fn draw_inner<'a>(
-        f: &mut Frame<CrosstermBackend<Stdout>>,
+        f: &mut Frame,
         log: &Vec<(String, Style)>,
         cmdline: &str,
         cursor: usize,
@@ -499,17 +499,19 @@ impl Tui {
                 )),
             ]));
         }
-        Ok(Table::new(cacheinfo)
-            .header(header)
-            .widths(&[
+        Ok(Table::new(
+            cacheinfo,
+            &[
                 Constraint::Length(10),
                 Constraint::Length(10),
                 Constraint::Length(10),
                 Constraint::Length(10),
-            ])
-            .column_spacing(1)
-            .style(Style::default())
-            .block(Block::default().title("Cache Status").borders(Borders::ALL)))
+            ],
+        )
+        .header(header)
+        .column_spacing(1)
+        .style(Style::default())
+        .block(Block::default().title("Cache Status").borders(Borders::ALL)))
     }
 
     fn render_connectionstatus(constates: &[TuiConnectionState]) -> Result<Table> {
@@ -550,18 +552,20 @@ impl Tui {
                 .height(2),
             );
         }
-        Ok(Table::new(coninfo)
-            .header(header)
-            .widths(&[
+        Ok(Table::new(
+            coninfo,
+            &[
                 Constraint::Length(6 * 2 + 5 + 4),
                 Constraint::Length(6),
                 Constraint::Length(6),
                 Constraint::Length(6),
                 Constraint::Length(20),
-            ])
-            .column_spacing(1)
-            .style(Style::default())
-            .block(Block::default().title("Connections").borders(Borders::ALL)))
+            ],
+        )
+        .header(header)
+        .column_spacing(1)
+        .style(Style::default())
+        .block(Block::default().title("Connections").borders(Borders::ALL)))
     }
 
     fn render_commandline(cmdline: &str, cursor: usize) -> Result<Paragraph> {
@@ -574,7 +578,7 @@ impl Tui {
             Span::styled(str_cursor, Style::default().bg(Color::Gray)),
             Span::raw(str_after),
         ];
-        Ok(Paragraph::new(Spans::from(cmdline_msg)).block(Block::default().title("Command")))
+        Ok(Paragraph::new(Line::from(cmdline_msg)).block(Block::default().title("Command")))
     }
 
     fn render_log<'a>(width: u16, log: &[(String, Style)]) -> Result<(List<'a>, ListState)> {
@@ -602,7 +606,7 @@ impl Tui {
                 "Type quit or hit Ctrl-c to exit | (h)elp | (c)onnect | (d)isconnect | (r)ead | (w)rite | (cr)ead | (cw)rite | (cd)estroy | (cd)estroy(a)ll ",
             ),
         ];
-        let text = Text::from(Spans::from(help_text_msg));
+        let text = Text::from(Line::from(help_text_msg));
         Ok(Paragraph::new(text))
     }
 }

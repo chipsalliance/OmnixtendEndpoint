@@ -22,11 +22,11 @@ cbindgen = "0.26.0"
 clap = { version = "4.3.11", features = ["derive"] }
 crossbeam = "0.8.2"
 ctrlc = "3.4.0"
-env_logger = "0.10.0"
+env_logger = "0.11.3"
 libc = "0.2.147"
 log = "0.4.19"
 parking_lot = "0.12.1"
-pnet = { version = "0.33.0", features = ["std"] }
+pnet = { version = "0.34.0", features = ["std"] }
 rand = "0.8.5"
-snafu = "0.7.4"
+snafu = "0.8.1"
 omnixtend-rs = { path = "../host_software/omnixtend-rs" }

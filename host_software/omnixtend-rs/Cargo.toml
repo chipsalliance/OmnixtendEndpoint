@@ -18,7 +18,7 @@ dashmap = "5.4.0"
 log = "0.4.19"
 modular = "1.0.0"
 parking_lot = "0.12.1"
-pnet = { version = "0.33.0", features = ["std"] }
-pnet_macros = "0.33.0"
-pnet_macros_support = "0.33.0"
-snafu = "0.7.4"
+pnet = { version = "0.34.0", features = ["std"] }
+pnet_macros = "0.34.0"
+pnet_macros_support = "0.34.0"
+snafu = "0.8.1"
