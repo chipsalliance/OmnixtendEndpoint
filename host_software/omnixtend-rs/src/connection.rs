@@ -151,8 +151,8 @@ impl Connection {
         let default_credits_receive = 1 << 28;
 
         Connection {
-            compat_mode: compat_mode,
-            id: id,
+            compat_mode,
+            id,
             packet_data: Mutex::new(None),
             resend_data: SegQueue::new(),
             resend_buffer: RwLock::new(VecDeque::new()),
@@ -345,10 +345,10 @@ impl Connection {
         new_omnixtend
     }
 
-    fn create_eth_header<'a>(&self, buf: &'a mut Vec<u8>) -> MutableEthernetPacket<'a> {
+    fn create_eth_header<'a>(&self, buf: &'a mut [u8]) -> MutableEthernetPacket<'a> {
         let mut new_packet = MutableEthernetPacket::new(buf).unwrap();
-        new_packet.set_source(self.my_mac.read().clone());
-        new_packet.set_destination(self.other_mac.read().clone());
+        new_packet.set_source(*self.my_mac.read());
+        new_packet.set_destination(*self.other_mac.read());
         new_packet.set_ethertype(EtherType(0xAAAA));
         new_packet
     }
@@ -668,16 +668,17 @@ fn deny_wrong_ethertype(id: u8, packet: &EthernetPacket) -> Result<()> {
 }
 
 fn check_timeout(timeout: Option<Duration>, start: &Instant) -> Result<()> {
-    Ok(if let Some(t) = timeout {
+    if let Some(t) = timeout {
         if start.elapsed() >= t {
             Err(Error::ConnectionCloseTimeout { timeout: t })?;
         }
-    })
+    };
+    Ok(())
 }
 
 fn space_in_packet(
     packet_len: &mut usize,
-    p: &Vec<u8>,
+    p: &[u8],
     mask_cntr: &mut usize,
     ethernet_max: usize,
     mask: &mut u64,

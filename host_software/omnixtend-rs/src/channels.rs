@@ -60,14 +60,10 @@ impl Channel {
         panic!("Received channel C message as requester: {:?}", msg)
     }
 
-    fn handle_read(
-        msg: &ChanABCDTilelinkMessage,
-        payload: &[u8],
-        pos: &usize,
-    ) -> (usize, Box<Vec<u8>>) {
+    fn handle_read(msg: &ChanABCDTilelinkMessage, payload: &[u8], pos: &usize) -> (usize, Vec<u8>) {
         let read_bytes = 1 << msg.size;
         let read_flits = max(read_bytes / 8, 1);
-        let mut v = Box::new(vec![0; read_bytes]);
+        let mut v = vec![0; read_bytes];
         v.copy_from_slice(&payload[*pos..*pos + read_bytes]);
         (read_flits, v)
     }
@@ -102,7 +98,7 @@ impl Channel {
                 let v = if denied {
                     Err(crate::operations::Error::UnalignedAccess {})
                 } else {
-                    Ok(*v)
+                    Ok(v)
                 };
 
                 (Some((msg.source, 0, v)), Some((msg.chan, 1 + read_flits)))
@@ -123,7 +119,7 @@ impl Channel {
                 *pos += 8;
 
                 (
-                    Some((msg.source, (sink & (1 << 26) - 1) as u32, v)),
+                    Some((msg.source, (sink & ((1 << 26) - 1)) as u32, v)),
                     Some((msg.chan, 2)),
                 )
             }
@@ -142,11 +138,11 @@ impl Channel {
                 let v = if denied {
                     Err(crate::operations::Error::UnalignedAccess {})
                 } else {
-                    Ok(*v)
+                    Ok(v)
                 };
 
                 (
-                    Some((msg.source, (sink & (1 << 26) - 1) as u32, v)),
+                    Some((msg.source, (sink & ((1 << 26) - 1)) as u32, v)),
                     Some((msg.chan, 2 + read_flits)),
                 )
             }

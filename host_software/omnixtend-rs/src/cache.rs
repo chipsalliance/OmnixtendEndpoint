@@ -61,7 +61,7 @@ impl Cache {
     pub fn new(id: u8) -> Cache {
         Cache {
             cache: DashMap::new(),
-            id: id,
+            id,
             probes: Mutex::new(Vec::new()),
         }
     }
@@ -90,7 +90,8 @@ impl Cache {
                     && !entry.release_pending
                     && entry.permissions != OmnixtendPermissionChangeCap::ToN
                 {
-                    Ok(self.handle_release(addr, entry.value_mut(), operations, credits))
+                    self.handle_release(addr, entry.value_mut(), operations, credits);
+                    Ok(())
                 } else {
                     Err(Error::NotInCache { addr })
                 }
@@ -103,8 +104,8 @@ impl Cache {
         let entry = CachedEntry {
             modified: false,
             release_pending: false,
-            data: data,
-            permissions: permissions,
+            data,
+            permissions,
             valid: true,
         };
         trace!(
@@ -158,7 +159,7 @@ impl Cache {
                 }
             }
         }
-        return (permission_change, None, blocking);
+        (permission_change, None, blocking)
     }
 
     pub fn write(
@@ -195,7 +196,7 @@ impl Cache {
                 let entry = operations
                     .perform(
                         &TLOperations::AcquireBlock(PermOp {
-                            address: address,
+                            address,
                             len: 8,
                             permissions: get_permission_change_grow(
                                 &perm_cur,
@@ -219,7 +220,7 @@ impl Cache {
         operations: &Operations,
         credits: &Credits,
         address: u64,
-        f: impl FnOnce(&mut u64) -> (),
+        f: impl FnOnce(&mut u64),
     ) -> Result<u64> {
         loop {
             let mut perm_cur = OmnixtendPermissionChangeCap::ToN;
@@ -253,7 +254,7 @@ impl Cache {
                 let entry = operations
                     .perform(
                         &TLOperations::AcquireBlock(PermOp {
-                            address: address,
+                            address,
                             len: 8,
                             permissions: get_permission_change_grow(
                                 &perm_cur,
@@ -308,7 +309,7 @@ impl Cache {
                 let entry = operations
                     .perform(
                         &TLOperations::AcquireBlock(PermOp {
-                            address: address,
+                            address,
                             len: 8,
                             permissions: perm_change,
                         }),

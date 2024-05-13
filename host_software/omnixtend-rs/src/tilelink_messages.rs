@@ -38,7 +38,7 @@ impl From<u8> for OmnixtendChannel {
 
 impl Default for OmnixtendChannel {
     fn default() -> Self {
-        return Self::INVALID;
+        Self::INVALID
     }
 }
 
@@ -98,19 +98,19 @@ pub enum OmnixtendPermissionChangeReport {
 
 pub fn get_resulting_permission(g: &OmnixtendPermissionChangeGrow) -> OmnixtendPermissionChangeCap {
     if *g == OmnixtendPermissionChangeGrow::NtoB {
-        return OmnixtendPermissionChangeCap::ToB;
+        OmnixtendPermissionChangeCap::ToB
     } else {
-        return OmnixtendPermissionChangeCap::ToT;
+        OmnixtendPermissionChangeCap::ToT
     }
 }
 
 pub fn get_report_from_cap(v: &OmnixtendPermissionChangeCap) -> OmnixtendPermissionChangeReport {
     if *v == OmnixtendPermissionChangeCap::ToB {
-        return OmnixtendPermissionChangeReport::BtoB;
+        OmnixtendPermissionChangeReport::BtoB
     } else if *v == OmnixtendPermissionChangeCap::ToT {
-        return OmnixtendPermissionChangeReport::TtoT;
+        OmnixtendPermissionChangeReport::TtoT
     } else {
-        return OmnixtendPermissionChangeReport::NtoN;
+        OmnixtendPermissionChangeReport::NtoN
     }
 }
 
@@ -119,13 +119,13 @@ pub fn get_permission_change_grow(
     request: &OmnixtendPermissionChangeCap,
 ) -> OmnixtendPermissionChangeGrow {
     if *cur == OmnixtendPermissionChangeCap::ToN && *request == OmnixtendPermissionChangeCap::ToB {
-        return OmnixtendPermissionChangeGrow::NtoB;
+        OmnixtendPermissionChangeGrow::NtoB
     } else if *cur == OmnixtendPermissionChangeCap::ToN
         && *request == OmnixtendPermissionChangeCap::ToT
     {
-        return OmnixtendPermissionChangeGrow::NtoT;
+        OmnixtendPermissionChangeGrow::NtoT
     } else {
-        return OmnixtendPermissionChangeGrow::BtoT;
+        OmnixtendPermissionChangeGrow::BtoT
     }
 }
 
@@ -134,19 +134,19 @@ pub fn get_permission_change(
     request: &OmnixtendPermissionChangeCap,
 ) -> u8 {
     if *cur == *request {
-        return get_report_from_cap(cur) as u8;
+        get_report_from_cap(cur) as u8
     } else if *cur == OmnixtendPermissionChangeCap::ToN {
-        return OmnixtendPermissionChangeReport::NtoN as u8;
+        OmnixtendPermissionChangeReport::NtoN as u8
     } else if *cur == OmnixtendPermissionChangeCap::ToT
         && *request == OmnixtendPermissionChangeCap::ToB
     {
-        return OmnixtendPermissionChangePrune::TtoB as u8;
+        OmnixtendPermissionChangePrune::TtoB as u8
     } else if *cur == OmnixtendPermissionChangeCap::ToT
         && *request == OmnixtendPermissionChangeCap::ToN
     {
-        return OmnixtendPermissionChangePrune::TtoN as u8;
+        OmnixtendPermissionChangePrune::TtoN as u8
     } else {
-        return OmnixtendPermissionChangePrune::BtoN as u8;
+        OmnixtendPermissionChangePrune::BtoN as u8
     }
 }
 

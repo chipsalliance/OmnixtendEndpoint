@@ -34,12 +34,12 @@ impl Tick {
         heartbeat: Option<Duration>,
     ) -> Self {
         Self {
-            ack_only_timeout: ack_only_timeout,
-            resend_timeout: resend_timeout,
-            heartbeat: heartbeat,
+            ack_only_timeout,
+            resend_timeout,
+            heartbeat,
             ack_required_since: None,
             resend_cooldown: None,
-            cycle: cycle,
+            cycle,
             last_send: Instant::now(),
             last_executed: Instant::now(),
         }
@@ -69,10 +69,8 @@ impl Tick {
     }
 
     fn do_resend(&mut self, connection: &Connection) {
-        if self.resend_cooldown.is_none() {
-            if connection.resend().is_ok() {
-                self.resend_cooldown = Some(Instant::now());
-            }
+        if self.resend_cooldown.is_none() && connection.resend().is_ok() {
+            self.resend_cooldown = Some(Instant::now());
         }
     }
 

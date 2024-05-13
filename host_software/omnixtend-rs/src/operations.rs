@@ -126,12 +126,10 @@ pub enum TLOperations<'a> {
 
 impl TLOperations<'_> {
     fn has_return(&self) -> bool {
-        match self {
-            TLOperations::GrantAck(_) => false,
-            TLOperations::ProbeAck(_) => false,
-            TLOperations::ProbeAckData(_) => false,
-            _ => true,
-        }
+        !matches!(
+            self,
+            TLOperations::GrantAck(_) | TLOperations::ProbeAck(_) | TLOperations::ProbeAckData(_)
+        )
     }
 
     fn get_response(&self, sink: u32) -> Option<Self> {
@@ -179,17 +177,14 @@ impl TLOperations<'_> {
     }
 
     fn has_result_data(&self) -> bool {
-        match self {
-            TLOperations::ReadLen(_) | TLOperations::AcquireBlock(_) => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            TLOperations::ReadLen(_) | TLOperations::AcquireBlock(_)
+        )
     }
 
     fn has_result_data_64(&self) -> bool {
-        match self {
-            TLOperations::Read(_) => true,
-            _ => false,
-        }
+        matches!(self, TLOperations::Read(_))
     }
 
     fn pack_read_len(r: &ReadOpLen, source: u32) -> Result<Vec<u8>> {
@@ -204,7 +199,7 @@ impl TLOperations<'_> {
                 size: len_log2 as u8,
                 domain: 0,
                 err: 0,
-                source: source,
+                source,
             },
         ))));
         buf[8..16].copy_from_slice(&u64::to_be_bytes(r.address));
@@ -248,7 +243,7 @@ impl TLOperations<'_> {
                 size: len_log2 as u8,
                 domain: 0,
                 err: 0,
-                source: source,
+                source,
             },
         ))));
         buf[8..16].copy_from_slice(&u64::to_be_bytes(r.address));
@@ -281,7 +276,7 @@ impl TLOperations<'_> {
                 size: len_log2 as u8,
                 domain: 0,
                 err: 0,
-                source: source,
+                source,
             },
         ))));
         buf[8..16].copy_from_slice(&u64::to_be_bytes(r.address));
@@ -303,7 +298,7 @@ impl TLOperations<'_> {
                 size: len_log2 as u8,
                 domain: 0,
                 err: 0,
-                source: source,
+                source,
             },
         ))));
         buf[8..16].copy_from_slice(&u64::to_be_bytes(r.address));
@@ -325,7 +320,7 @@ impl TLOperations<'_> {
                 size: len_log2 as u8,
                 domain: 0,
                 err: 0,
-                source: source,
+                source,
             },
         ))));
         buf[8..16].copy_from_slice(&u64::to_be_bytes(r.address));
@@ -347,7 +342,7 @@ impl TLOperations<'_> {
                 size: len_log2 as u8,
                 domain: 0,
                 err: 0,
-                source: source,
+                source,
             },
         ))));
         buf[8..16].copy_from_slice(&u64::to_be_bytes(r.release.address));
@@ -367,7 +362,7 @@ impl TLOperations<'_> {
                 size: r.size,
                 domain: 0,
                 err: 0,
-                source: source,
+                source,
             },
         ))));
         buf[8..16].copy_from_slice(&u64::to_be_bytes(r.address));
@@ -389,7 +384,7 @@ impl TLOperations<'_> {
                 size: len_log2 as u8,
                 domain: 0,
                 err: 0,
-                source: source,
+                source,
             },
         ))));
         buf[8..16].copy_from_slice(&u64::to_be_bytes(r.probe.address));
@@ -407,7 +402,7 @@ impl TLOperations<'_> {
 
         let mut bytes_left = r.data.len() % 64;
 
-        let mut mask = VecDeque::from(vec![u64::MAX; mask_len as usize]);
+        let mut mask = VecDeque::from(vec![u64::MAX; mask_len]);
 
         for mask_min in r.data.len() / 64..mask_len {
             if bytes_left != 0 {
@@ -431,7 +426,7 @@ impl TLOperations<'_> {
                 size: (next_pow2 as f64).log2().floor() as u8,
                 domain: 0,
                 err: 0,
-                source: source,
+                source,
             },
         ))));
         buf[8..16].copy_from_slice(&u64::to_be_bytes(r.address));
@@ -504,6 +499,12 @@ pub struct Operations {
     operation_completions_recv: Vec<Receiver<(u32, Result<Vec<u8>>)>>,
     operations_outstanding: Mutex<Vec<Vec<u8>>>,
     outstanding_cntr: AtomicUsize,
+}
+
+impl Default for Operations {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Operations {
@@ -584,23 +585,19 @@ impl Operations {
     }
 
     fn create_operation(&self, operation: &TLOperations, source: u32) -> Result<Vec<u8>> {
-        let op = Result::from(&OpAndSource {
-            operation: operation,
-            source: source,
-        })
-        .or_else(|e| {
+        let op = Result::from(&OpAndSource { operation, source }).map_err(|e| {
             if operation.has_return() {
                 self.available_sources.push(source);
             }
             self.outstanding_cntr.fetch_sub(1, Ordering::Relaxed);
-            Err(e)
+            e
         })?;
         Ok(op)
     }
 
     fn get_source(&self, operation: &TLOperations) -> u32 {
         let backoff = Backoff::new();
-        let source = if operation.has_return() {
+        if operation.has_return() {
             loop {
                 match self.available_sources.pop() {
                     Some(a) => break a,
@@ -609,8 +606,7 @@ impl Operations {
             }
         } else {
             0
-        };
-        source
+        }
     }
 
     fn complete_inner(&self, operation: &TLOperations, ret: Vec<u8>) -> TLResult {
