@@ -339,12 +339,21 @@ impl Sim {
         self.connection_closing.store(true, Ordering::Relaxed);
 
         let backoff = Backoff::new();
-        if self.responses_outstanding() {
+        while self.responses_outstanding() {
             backoff.snooze();
         }
 
         self.connection.close_connection(None).unwrap();
         self.connection_closed.store(true, Ordering::Relaxed);
+
+        // Wait for forward of final flit
+        let backoff = Backoff::new();
+        while {
+            let packet_cur_lock = self.packet_cur.lock();
+            !packet_cur_lock.is_empty()
+        } {
+            backoff.snooze();
+        }
     }
 
     pub fn next_flit(&self) -> Option<(u64, bool, u8)> {
