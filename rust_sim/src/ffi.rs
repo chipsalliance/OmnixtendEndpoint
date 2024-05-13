@@ -30,7 +30,7 @@ pub enum Error {
 //////////////////////
 // Taken from https://michael-f-bryan.github.io/rust-ffi-guide/errors/return_types.html
 thread_local! {
-    static LAST_ERROR: RefCell<Option<Box<Error>>> = RefCell::new(None);
+    static LAST_ERROR: RefCell<Option<Box<Error>>> = const { RefCell::new(None) };
 }
 
 pub fn take_last_error() -> Option<Box<Error>> {
@@ -128,19 +128,31 @@ pub extern "C" fn sim_new(number: usize, compat_mode: bool) -> *const SimInfo {
     Arc::into_raw(Arc::new(SimInfo {
         sims: (0..number).map(|_| Arc::new(RwLock::new(None))).collect(),
         join_handler: Vec::new(),
-        compat_mode: compat_mode,
+        compat_mode,
     }))
 }
 
 #[no_mangle]
-pub extern "C" fn sim_destroy(t: *const SimInfo) {
+pub unsafe extern "C" fn sim_destroy(t: *const SimInfo) {
+    if t.is_null() {
+        warn!("Null pointer passed into sim_destroy() as sim");
+        update_last_error(Error::NullPointer {});
+        return;
+    }
+
     unsafe {
         let _b = Arc::from_raw(t);
     }
 }
 
 #[no_mangle]
-pub extern "C" fn sim_next_flit(r: *mut [u64; 3], t: *mut SimInfo) {
+pub unsafe extern "C" fn sim_next_flit(r: *mut [u64; 3], t: *mut SimInfo) {
+    if t.is_null() {
+        warn!("Null pointer passed into sim_next_flit() as flit");
+        update_last_error(Error::NullPointer {});
+        return;
+    }
+
     let rl = unsafe { &mut *r };
 
     rl[0] = u64::MAX;
@@ -171,7 +183,7 @@ pub extern "C" fn sim_next_flit(r: *mut [u64; 3], t: *mut SimInfo) {
 }
 
 #[no_mangle]
-pub extern "C" fn sim_push_flit(t: *const SimInfo, val: u64, last: bool, mask: u8) {
+pub unsafe extern "C" fn sim_push_flit(t: *const SimInfo, val: u64, last: bool, mask: u8) {
     if t.is_null() {
         warn!("Null pointer passed into sim_push_flit() as Sim");
         update_last_error(Error::NullPointer {});
@@ -186,7 +198,7 @@ pub extern "C" fn sim_push_flit(t: *const SimInfo, val: u64, last: bool, mask: u
 }
 
 #[no_mangle]
-pub extern "C" fn sim_tick(t: *const SimInfo) {
+pub unsafe extern "C" fn sim_tick(t: *const SimInfo) {
     if t.is_null() {
         warn!("Null pointer passed into sim_tick() as Sim");
         update_last_error(Error::NullPointer {});
@@ -211,30 +223,14 @@ pub extern "C" fn sim_print_reg(name: u64, value: u64) {
 }
 
 #[no_mangle]
-pub extern "C" fn start_execution_thread(t: *mut SimInfo) {
+pub unsafe extern "C" fn start_execution_thread(t: *mut SimInfo) {
+    if t.is_null() {
+        warn!("Null pointer passed into start_execution_thread() as sim");
+        update_last_error(Error::NullPointer {});
+        return;
+    }
+
     let tl = unsafe { &mut *t };
-    //let mut first = true;
-    // for (i, s) in tl.sims.iter().enumerate() {
-    //     if (i % 2) == 0 {
-    //         tl.join_handler.push(test_read_and_write(
-    // s.clone(),
-    // i as u8,
-    // tl.compat_mode,
-    // MacAddr::new(0, 0, 0, 0, 0, i + 1 as u8),
-    // MacAddr::new(0, 0, 0, 0, 0, 0),
-    //         ));
-    //     } else {
-    //         tl.join_handler.push(test_tlc(
-    //             s.clone(),
-    //             i as u8,
-    //             tl.compat_mode,
-    //             MacAddr::new(0, 0, 0, 0, 0, i + 1 as u8),
-    //             MacAddr::new(0, 0, 0, 0, 0, 0),
-    //             first,
-    //         ));
-    //         first = false;
-    //     }
-    // }
     tl.join_handler.push(test_read_write_simple(
         tl.sims.first().unwrap().clone(),
         42,
@@ -245,7 +241,13 @@ pub extern "C" fn start_execution_thread(t: *mut SimInfo) {
 }
 
 #[no_mangle]
-pub extern "C" fn stop_execution_thread(t: *mut SimInfo) {
+pub unsafe extern "C" fn stop_execution_thread(t: *mut SimInfo) {
+    if t.is_null() {
+        warn!("Null pointer passed into stop_execution_thread() as sim");
+        update_last_error(Error::NullPointer {});
+        return;
+    }
+
     let a = unsafe { &*t };
     info!("Requesting execution threads to stop.");
     for h in a.join_handler.iter() {
@@ -254,7 +256,13 @@ pub extern "C" fn stop_execution_thread(t: *mut SimInfo) {
 }
 
 #[no_mangle]
-pub extern "C" fn can_destroy_execution_thread(t: *mut SimInfo) -> bool {
+pub unsafe extern "C" fn can_destroy_execution_thread(t: *mut SimInfo) -> bool {
+    if t.is_null() {
+        warn!("Null pointer passed into can_destroy_execution_thread() as sim");
+        update_last_error(Error::NullPointer {});
+        return false;
+    }
+
     let a = unsafe { &*t };
     let mut can_do = true;
 
@@ -269,7 +277,13 @@ pub extern "C" fn can_destroy_execution_thread(t: *mut SimInfo) -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn destroy_execution_thread(t: *mut SimInfo) {
+pub unsafe extern "C" fn destroy_execution_thread(t: *mut SimInfo) {
+    if t.is_null() {
+        warn!("Null pointer passed into destroy_execution_thread() as sim");
+        update_last_error(Error::NullPointer {});
+        return;
+    }
+
     let a = unsafe { &mut *t };
     info!("Waiting on execution thread to stop.");
 
@@ -282,7 +296,13 @@ pub extern "C" fn destroy_execution_thread(t: *mut SimInfo) {
 
 // Socket simulation
 #[no_mangle]
-pub extern "C" fn socket_new(opt: *const i8) -> *const Socket {
+pub unsafe extern "C" fn socket_new(opt: *const i8) -> *const Socket {
+    if opt.is_null() {
+        warn!("Null pointer passed into socket_new() as opt");
+        update_last_error(Error::NullPointer {});
+        return std::ptr::null();
+    }
+
     let m = unsafe { std::ffi::CStr::from_ptr(opt) };
     let s = match m.to_str() {
         Ok(v) => v,
@@ -297,14 +317,20 @@ pub extern "C" fn socket_new(opt: *const i8) -> *const Socket {
 }
 
 #[no_mangle]
-pub extern "C" fn socket_destroy(t: *const Socket) {
+pub unsafe extern "C" fn socket_destroy(t: *const Socket) {
+    if t.is_null() {
+        warn!("Null pointer passed into socket_destroy() as Socket");
+        update_last_error(Error::NullPointer {});
+        return;
+    }
+
     unsafe {
         let _b = Arc::from_raw(t);
     }
 }
 
 #[no_mangle]
-pub extern "C" fn socket_active(t: *const Socket) -> bool {
+pub unsafe extern "C" fn socket_active(t: *const Socket) -> bool {
     if t.is_null() {
         warn!("Null pointer passed into socket_active() as Socket");
         update_last_error(Error::NullPointer {});
@@ -316,13 +342,20 @@ pub extern "C" fn socket_active(t: *const Socket) -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn socket_next_flit(r: *mut [u64; 4], t: *const Socket) {
+pub unsafe extern "C" fn socket_next_flit(r: *mut [u64; 4], t: *const Socket) {
+    if r.is_null() {
+        warn!("Null pointer passed into socket_next_flit() as Flit");
+        update_last_error(Error::NullPointer {});
+        return;
+    }
+
     let rl = unsafe { &mut *r };
 
     if t.is_null() {
-        warn!("Null pointer passed into sim_next_flit() as Sim");
+        warn!("Null pointer passed into socket_next_flit() as Socket");
         update_last_error(Error::NullPointer {});
         rl[0] = u64::MAX;
+        return;
     }
 
     let tl = unsafe { &*t };
@@ -337,9 +370,9 @@ pub extern "C" fn socket_next_flit(r: *mut [u64; 4], t: *const Socket) {
 }
 
 #[no_mangle]
-pub extern "C" fn socket_push_flit(t: *const Socket, val: u64, last: bool, mask: u8) {
+pub unsafe extern "C" fn socket_push_flit(t: *const Socket, val: u64, last: bool, mask: u8) {
     if t.is_null() {
-        warn!("Null pointer passed into sim_push_flit() as Sim");
+        warn!("Null pointer passed into socket_push_flit() as Socket");
         update_last_error(Error::NullPointer {});
     }
 

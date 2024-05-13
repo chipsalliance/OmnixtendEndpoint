@@ -158,8 +158,8 @@ pub fn test_read_and_write(
             info!("TEST {}: Hello from execution thread...", id);
             info!("TEST {}: Adding some credits to get things going.", id);
             get_sim(&sim, id, compat_mode, my_mac, other_mac).establish_connection();
-            let mut outstanding_tests = 100;
-            for i in 0..outstanding_tests {
+            let total_tests = 100;
+            for i in 0..total_tests {
                 if !s_local.load(Ordering::Relaxed) {
                     let timer_start = get_sim(&sim, id, compat_mode, my_mac, other_mac).ticks();
                     let address = rand::random::<u64>() & !(0xF);
@@ -181,7 +181,6 @@ pub fn test_read_and_write(
                         get_sim(&sim, id, compat_mode, my_mac, other_mac).ticks() - read_start;
                     let p = u64::from_ne_bytes(read_result[..].try_into().unwrap());
                     trace!("TEST {}: Read result 0x{:X}", id, p);
-                    outstanding_tests -= 1;
                     if p != value {
                         error!(
                             "TEST {}: Got the wrong read result 0x{:X} != 0x{:X}",
@@ -195,7 +194,7 @@ pub fn test_read_and_write(
                             get_sim(&sim, id, compat_mode, my_mac, other_mac).ticks() - timer_start,
                             write_end,
                             read_end,
-                            outstanding_tests
+                            total_tests - i
                         );
                     }
                     get_sim(&sim, id, compat_mode, my_mac, other_mac).close_connection();

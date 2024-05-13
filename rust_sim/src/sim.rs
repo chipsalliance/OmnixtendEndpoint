@@ -80,8 +80,8 @@ impl Sim {
             packet_cur: Mutex::new(VecDeque::new()),
             packet_cur_mask: AtomicU8::new(0),
             packet_in: RwLock::new(Vec::new()),
-            id: id,
-            compat_mode: compat_mode,
+            id,
+            compat_mode,
             connection: Connection::new(compat_mode, id, my_mac, other_mac),
             operations: Operations::new(),
             cache: Cache::new(id),
@@ -114,24 +114,24 @@ impl Sim {
     }
 
     pub fn is_connection_active(&self) -> bool {
-        return self.get_connection_state() == ConnectionState::Active;
+        self.get_connection_state() == ConnectionState::Active
     }
 
     pub fn cached_read(&self, address: u64) -> Result<u64> {
         self.cache
-            .read(&self.operations, &self.connection.credits(), address)
+            .read(&self.operations, self.connection.credits(), address)
             .context(CacheSnafu)
     }
 
     pub fn cached_write(&self, address: u64, data: u64) -> Result<()> {
         self.cache
-            .write(&self.operations, &self.connection.credits(), address, data)
+            .write(&self.operations, self.connection.credits(), address, data)
             .context(CacheSnafu)
     }
 
-    pub fn cached_rmw(&self, address: u64, f: impl FnOnce(&mut u64) -> ()) -> Result<u64> {
+    pub fn cached_rmw(&self, address: u64, f: impl FnOnce(&mut u64)) -> Result<u64> {
         self.cache
-            .rmw(&self.operations, &self.connection.credits(), address, f)
+            .rmw(&self.operations, self.connection.credits(), address, f)
             .context(CacheSnafu)
     }
 
@@ -143,10 +143,7 @@ impl Sim {
         match self
             .operations
             .perform(
-                &TLOperations::ReadLen(ReadOpLen {
-                    address: address,
-                    len_bytes: len_bytes,
-                }),
+                &TLOperations::ReadLen(ReadOpLen { address, len_bytes }),
                 self.connection.credits(),
             )
             .context(OperationsSnafu)?
@@ -164,7 +161,7 @@ impl Sim {
         match self
             .operations
             .perform(
-                &TLOperations::Read(ReadOp { address: address }),
+                &TLOperations::Read(ReadOp { address }),
                 self.connection.credits(),
             )
             .context(OperationsSnafu)?
@@ -181,10 +178,7 @@ impl Sim {
 
         self.operations
             .perform(
-                &TLOperations::WriteLen(WriteOpLen {
-                    address: address,
-                    data: data,
-                }),
+                &TLOperations::WriteLen(WriteOpLen { address, data }),
                 self.connection.credits(),
             )
             .context(OperationsSnafu)?;
@@ -198,10 +192,7 @@ impl Sim {
 
         self.operations
             .perform(
-                &TLOperations::Write(WriteOp {
-                    address: address,
-                    data: data,
-                }),
+                &TLOperations::Write(WriteOp { address, data }),
                 self.connection.credits(),
             )
             .context(OperationsSnafu)?;
@@ -222,10 +213,10 @@ impl Sim {
         self.operations
             .perform(
                 &TLOperations::Release(ReleaseOp {
-                    address: address,
+                    address,
                     len: len_bytes,
-                    perm_from: perm_from,
-                    perm_to: perm_to,
+                    perm_from,
+                    perm_to,
                 }),
                 self.connection.credits(),
             )
@@ -248,12 +239,12 @@ impl Sim {
             .perform(
                 &TLOperations::ReleaseData(ReleaseDataOp {
                     release: ReleaseOp {
-                        address: address,
+                        address,
                         len: data.len(),
-                        perm_from: perm_from,
-                        perm_to: perm_to,
+                        perm_from,
+                        perm_to,
                     },
-                    data: data,
+                    data,
                 }),
                 self.connection.credits(),
             )
@@ -274,9 +265,9 @@ impl Sim {
         self.operations
             .perform(
                 &TLOperations::AcquirePerm(PermOp {
-                    address: address,
+                    address,
                     len: len_bytes,
-                    permissions: permissions,
+                    permissions,
                 }),
                 self.connection.credits(),
             )
@@ -298,9 +289,9 @@ impl Sim {
             .operations
             .perform(
                 &TLOperations::AcquireBlock(PermOp {
-                    address: address,
+                    address,
                     len: len_bytes,
-                    permissions: permissions,
+                    permissions,
                 }),
                 self.connection.credits(),
             )
@@ -318,10 +309,7 @@ impl Sim {
 
         self.operations
             .perform(
-                &&TLOperations::WritePartial(WriteOpPartial {
-                    address: address,
-                    data: data,
-                }),
+                &TLOperations::WritePartial(WriteOpPartial { address, data }),
                 self.connection.credits(),
             )
             .context(OperationsSnafu)?;

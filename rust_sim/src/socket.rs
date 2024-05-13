@@ -91,7 +91,7 @@ fn chunkize_packet(p: &[u8]) -> VecDeque<u64> {
 impl Socket {
     pub fn new(opt_str: &str) -> Self {
         println!("Using CLI {}", opt_str);
-        let opt = Opt::parse_from(opt_str.split(" "));
+        let opt = Opt::parse_from(opt_str.split(' '));
         println!("Parsed CLI {:?}", opt);
         let active = Arc::new(AtomicBool::new(true));
         let active_ctrlc = active.clone();
@@ -104,17 +104,19 @@ impl Socket {
         info!("Available interfaces are: {:?}", interfaces);
         let interface = interfaces
             .into_iter()
-            .filter(interface_names_match)
-            .next()
-            .expect(&format!("Interface {} not found", opt.ethernet_port));
+            .find(interface_names_match)
+            .unwrap_or_else(|| panic!("Interface {} not found", opt.ethernet_port));
 
         println!("Selected interface {:?}", interface);
 
         // Create a new channel, dealing with layer 2 packets
-        let mut config: pnet::datalink::Config = Default::default();
-        config.write_buffer_size = opt.write_buffer_size;
-        config.read_buffer_size = opt.read_buffer_size;
-        config.read_timeout = Some(Duration::from_millis(250));
+        let config = pnet::datalink::Config {
+            write_buffer_size: opt.write_buffer_size,
+            read_buffer_size: opt.read_buffer_size,
+            read_timeout: Some(Duration::from_millis(250)),
+            ..Default::default()
+        };
+
         let (tx, rx) = match datalink::channel(&interface, config) {
             Ok(Ethernet(tx, rx)) => (tx, rx),
             Ok(_) => panic!("Can't open network interface."),
@@ -145,9 +147,9 @@ impl Socket {
             packet_cur: Mutex::new(VecDeque::new()),
             packet_cur_mask: AtomicU8::new(0),
             packet_in: RwLock::new(Vec::new()),
-            packets_in: packets_in,
-            packets_out: packets_out,
-            active: active,
+            packets_in,
+            packets_out,
+            active,
         }
     }
 
@@ -161,11 +163,9 @@ impl Socket {
             info!("Hello from send thread...");
             while active.load(Ordering::Relaxed) {
                 if let Some(pkt) = packets_in.pop() {
-                    if reliability != 1.0 {
-                        if rand::random::<f64>() > reliability {
-                            trace!("Randomly dropping send packet...");
-                            continue;
-                        }
+                    if reliability != 1.0 && rand::random::<f64>() > reliability {
+                        trace!("Randomly dropping send packet...");
+                        continue;
                     }
                     tx.send_to(&pkt[..], None);
                 }
@@ -185,11 +185,9 @@ impl Socket {
             info!("Hello from receive thread...");
             while active.load(Ordering::Relaxed) {
                 let p = rx.next();
-                if reliability != 1.0 {
-                    if rand::random::<f64>() > reliability {
-                        trace!("Randomly dropping receive packet...");
-                        continue;
-                    }
+                if reliability != 1.0 && rand::random::<f64>() > reliability {
+                    trace!("Randomly dropping receive packet...");
+                    continue;
                 }
                 if let Ok(pkt) = p {
                     packets_out.push(pkt.to_vec());
