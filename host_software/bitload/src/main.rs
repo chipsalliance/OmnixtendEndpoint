@@ -84,13 +84,13 @@ fn run(opts: &Opts) -> Result<()> {
     let interface_names_match = |iface: &NetworkInterface| iface.name == opts.interface;
 
     let interfaces = datalink::interfaces();
-    let interface = interfaces
-        .into_iter()
-        .filter(interface_names_match)
-        .next()
-        .ok_or(Error::InterfaceNotFound {
-            name: opts.interface.to_string(),
-        })?;
+    let interface =
+        interfaces
+            .into_iter()
+            .find(interface_names_match)
+            .ok_or(Error::InterfaceNotFound {
+                name: opts.interface.to_string(),
+            })?;
 
     // Create a new channel, dealing with layer 2 packets
     let (tx, rx) = setup_connection(interface)?;
@@ -121,11 +121,11 @@ fn run(opts: &Opts) -> Result<()> {
         tx_thread_handler(connection_local, tx);
     });
 
-    let base_addr = opts.base_address.clone();
+    let base_addr = opts.base_address;
     let filename = opts.file.clone();
     let ifc = opts.interface.clone();
-    let is_read = opts.is_read.clone();
-    let size = opts.size.clone();
+    let is_read = opts.is_read;
+    let size = opts.size;
 
     let connection_local = connection.clone();
     let operations_local = operations.clone();
@@ -146,16 +146,12 @@ fn run(opts: &Opts) -> Result<()> {
 
     action_thread
         .join()
-        .or_else(|x| Err(Error::ThreadError { s: x }))?;
+        .map_err(|x| Error::ThreadError { s: x })?;
     tick_thread
         .join()
-        .or_else(|x| Err(Error::ThreadError { s: x }))?;
-    tx_thread
-        .join()
-        .or_else(|x| Err(Error::ThreadError { s: x }))?;
-    rx_thread
-        .join()
-        .or_else(|x| Err(Error::ThreadError { s: x }))?;
+        .map_err(|x| Error::ThreadError { s: x })?;
+    tx_thread.join().map_err(|x| Error::ThreadError { s: x })?;
+    rx_thread.join().map_err(|x| Error::ThreadError { s: x })?;
 
     Ok(())
 }
@@ -246,10 +242,13 @@ fn setup_ctrlc() -> Result<Arc<AtomicBool>> {
 fn setup_connection(
     interface: NetworkInterface,
 ) -> Result<(Box<dyn DataLinkSender>, Box<dyn DataLinkReceiver>)> {
-    let mut config: pnet::datalink::Config = Default::default();
-    config.write_buffer_size = 16384 * 16;
-    config.read_buffer_size = 16384 * 16;
-    config.read_timeout = Some(Duration::from_secs(1));
+    let config = pnet::datalink::Config {
+        write_buffer_size: 16384 * 16,
+        read_buffer_size: 16384 * 16,
+        read_timeout: Some(Duration::from_secs(1)),
+        ..Default::default()
+    };
+
     Ok(match datalink::channel(&interface, config) {
         Ok(Ethernet(tx, rx)) => (tx, rx),
         Ok(_) => return Err(Error::UnhandledChannelType {}),
@@ -357,7 +356,7 @@ fn execution_thread(
                     name: filename.to_string_lossy().clone(),
                 })
                 .unwrap();
-            file.write(&buf[..]).unwrap();
+            file.write_all(&buf[..]).unwrap();
         }
         if let Err(e) = connection_local.close_connection(Some(Duration::from_millis(500))) {
             error!("Connection did not close before timeout expired: {}", e);
@@ -417,7 +416,7 @@ fn do_parallel_write(
     operations_local: &Arc<Operations>,
     connection_local: &Arc<Connection>,
 ) {
-    (&mmap[..])
+    mmap[..]
         .par_chunks(chunk_size)
         .enumerate()
         .for_each(|(idx, c)| {
@@ -437,22 +436,20 @@ fn do_parallel_write(
                 ) {
                     error!("Failed write to 0x{:X}: {}", addr, e);
                 }
-            } else {
-                if let Err(e) = operations_local.perform(
-                    &TLOperations::WritePartial(WriteOpPartial {
-                        address: addr,
-                        data: c,
-                    }),
-                    connection_local.credits(),
-                ) {
-                    error!("Failed partial write to 0x{:X}: {}", addr, e);
-                }
+            } else if let Err(e) = operations_local.perform(
+                &TLOperations::WritePartial(WriteOpPartial {
+                    address: addr,
+                    data: c,
+                }),
+                connection_local.credits(),
+            ) {
+                error!("Failed partial write to 0x{:X}: {}", addr, e);
             }
         });
 }
 
 #[derive(Debug, Parser)]
-#[clap(version = "0.1", author = "Jaco Hofmann <Jaco.Hofmann@wdc.com>")]
+#[clap(author = "Jaco Hofmann <Jaco.Hofmann@wdc.com>")]
 struct Opts {
     #[clap(short, long)]
     interface: String,
