@@ -46,10 +46,13 @@ impl Network {
             })?;
 
         // Create a new channel, dealing with layer 2 packets
-        let mut config: pnet::datalink::Config = Default::default();
-        config.write_buffer_size = 16384 * 16;
-        config.read_buffer_size = 16384 * 16;
-        config.read_timeout = Some(Duration::from_secs(1));
+        let config = pnet::datalink::Config {
+            write_buffer_size: 16384 * 16,
+            read_buffer_size: 16384 * 16,
+            read_timeout: Some(Duration::from_secs(1)),
+            ..Default::default()
+        };
+
         let mac = match interface.mac {
             Some(m) => m,
             None => MacAddr(0, 0, 0, 0, 0, 1),
@@ -98,11 +101,11 @@ impl Network {
 
         Ok(Network {
             _tx_thread: tx_thread,
-            tx_queue: tx_queue,
+            tx_queue,
             _rx_thread: rx_enqueue_thread,
-            terminate: terminate,
-            rx_queue: rx_queue,
-            mac: mac,
+            terminate,
+            rx_queue,
+            mac,
         })
     }
 

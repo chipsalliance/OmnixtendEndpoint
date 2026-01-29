@@ -251,7 +251,7 @@ impl Tui {
             .map(|_v| ())
     }
 
-    fn draw_inner<'a>(
+    fn draw_inner(
         f: &mut Frame,
         log: &Vec<(String, Style)>,
         cmdline: &str,
@@ -265,13 +265,13 @@ impl Tui {
             .direction(Direction::Vertical)
             .constraints(
                 [
-                    Constraint::Length(f.size().height - 3),
+                    Constraint::Length(f.area().height - 3),
                     Constraint::Length(2),
                     Constraint::Length(1),
                 ]
                 .as_ref(),
             )
-            .split(f.size());
+            .split(f.area());
 
         f.render_widget(Self::render_commandline(cmdline, cursor)?, chunks_v[1]);
 
@@ -282,7 +282,7 @@ impl Tui {
             .constraints([Constraint::Percentage(60), Constraint::Percentage(40)])
             .split(chunks_v[0]);
 
-        let mut logrender = Self::render_log(chunks_h[0].width - 2, &log)?;
+        let mut logrender = Self::render_log(chunks_h[0].width - 2, log)?;
         f.render_stateful_widget(logrender.0, chunks_h[0], &mut logrender.1);
 
         let chunks_status = Layout::default()
@@ -345,31 +345,31 @@ impl Tui {
         match cmdline.split_whitespace().next().unwrap_or_default() {
             "quit" | "q" => event = CmdlineEvents::Quit,
             "c" | "connect" => {
-                let mac = Self::get_mac(&cmdline)?;
+                let mac = Self::get_mac(cmdline)?;
                 event = CmdlineEvents::Connect(mac);
             }
             "d" | "disconnect" => {
-                let mac = Self::get_mac(&cmdline)?;
+                let mac = Self::get_mac(cmdline)?;
                 event = CmdlineEvents::Disconnect(mac);
             }
             "w" | "write" => {
-                let (addr, data) = Self::get_write(&cmdline)?;
+                let (addr, data) = Self::get_write(cmdline)?;
                 event = CmdlineEvents::Write(addr, data);
             }
             "r" | "read" => {
-                let addr = Self::get_read(&cmdline)?;
+                let addr = Self::get_read(cmdline)?;
                 event = CmdlineEvents::Read(addr);
             }
             "cw" | "cwrite" => {
-                let (addr, data) = Self::get_write(&cmdline)?;
+                let (addr, data) = Self::get_write(cmdline)?;
                 event = CmdlineEvents::CacheWrite(addr, data);
             }
             "cr" | "cread" => {
-                let addr = Self::get_read(&cmdline)?;
+                let addr = Self::get_read(cmdline)?;
                 event = CmdlineEvents::CacheRead(addr);
             }
             "cd" | "cdestroy" => {
-                let addr = Self::get_read(&cmdline)?;
+                let addr = Self::get_read(cmdline)?;
                 event = CmdlineEvents::CacheRelease(addr);
             }
             "cda" | "cdestroyall" => {
@@ -459,7 +459,7 @@ impl Tui {
             .ok_or(Error::InvalidAddrRegex { s: s.to_string() })?
             .as_str();
 
-        Ok(u64::from_str_radix(addr, 16).context(ParseIntSnafu)?)
+        u64::from_str_radix(addr, 16).context(ParseIntSnafu)
     }
 
     fn get_mac(s: &str) -> Result<MacAddr> {
@@ -474,7 +474,7 @@ impl Tui {
         MacAddr::from_str(mac).context(InvalidMacSnafu)
     }
 
-    fn render_cachestatus(cachestates: &[CacheStatus]) -> Result<Table> {
+    fn render_cachestatus(cachestates: &[CacheStatus]) -> Result<Table<'_>> {
         let header = Row::new(vec!["Address", "Modified", "Permission", "Data"]);
         let mut cacheinfo = Vec::new();
         for c in cachestates {
@@ -514,7 +514,7 @@ impl Tui {
         .block(Block::default().title("Cache Status").borders(Borders::ALL)))
     }
 
-    fn render_connectionstatus(constates: &[TuiConnectionState]) -> Result<Table> {
+    fn render_connectionstatus(constates: &[TuiConnectionState]) -> Result<Table<'_>> {
         let mut coninfo = Vec::new();
         let header = Row::new(vec![
             "Mac/Address (Size)",
@@ -568,7 +568,7 @@ impl Tui {
         .block(Block::default().title("Connections").borders(Borders::ALL)))
     }
 
-    fn render_commandline(cmdline: &str, cursor: usize) -> Result<Paragraph> {
+    fn render_commandline(cmdline: &str, cursor: usize) -> Result<Paragraph<'_>> {
         let str_before = &cmdline[0..cursor];
         let str_cursor = &cmdline[cursor..cursor + 1];
         let str_after = &cmdline[cursor + 1..];

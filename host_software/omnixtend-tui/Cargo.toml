@@ -6,7 +6,7 @@
 
 [package]
 name = "omnixtend-tui"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Jaco Hofmann <jaco.hofmann@wdc.com>"]
 edition = "2021"
 license = "Apache-2.0"
@@ -29,5 +29,9 @@ human_bytes = "0.4.2"
 better-panic = "0.3.0"
 parking_lot = "0.12.1"
 textwrap = "0.16.0"
-time = {version = "0.3.22", features = ["formatting", "local-offset", "macros"]}
-ratatui = "0.26.1"
+time = { version = "0.3.22", features = [
+    "formatting",
+    "local-offset",
+    "macros",
+] }
+ratatui = "0.30.0"

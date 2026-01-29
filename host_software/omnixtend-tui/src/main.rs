@@ -149,7 +149,7 @@ fn run(opts: &Opts) -> Result<()> {
                         info!(
                             "Possibly stale connection: {:?} {:?}",
                             p,
-                            OmnixtendPacket::new(&p.payload())
+                            OmnixtendPacket::new(p.payload())
                         );
                     }
                 }
@@ -398,7 +398,7 @@ fn handle_connection_events(
     my_mac: MacAddr,
     ox10mode: bool,
 ) -> Result<()> {
-    Ok(match e {
+    match e {
         CmdlineEvents::Connect(mac) => {
             let c = connections_local;
             if !c.contains_key(&mac) {
@@ -484,7 +484,7 @@ fn handle_connection_events(
                 if let Err(e) = k.cache_release_single(addr) {
                     tui.log_message(&format!("CD failed: {:?}", e), log::Level::Error)?;
                 } else {
-                    tui.log_message(&format!("CD"), log::Level::Info)?;
+                    tui.log_message("CD", log::Level::Info)?;
                 }
 
                 Ok(())
@@ -495,12 +495,13 @@ fn handle_connection_events(
                 if let Err(e) = c.value().cache_release() {
                     tui.log_message(&format!("CD All failed: {:?}", e), log::Level::Error)?;
                 } else {
-                    tui.log_message(&format!("CD All"), log::Level::Info)?;
+                    tui.log_message("CD All", log::Level::Info)?;
                 }
             }
         }
         _ => (),
-    })
+    };
+    Ok(())
 }
 
 fn execute_for_connection(
@@ -511,8 +512,7 @@ fn execute_for_connection(
 ) -> Result<()> {
     connections_local
         .iter()
-        .filter(|k| k.value().deals_with(addr))
-        .next()
+        .find(|k| k.value().deals_with(addr))
         .map_or_else::<Result<()>, _, _>(
             || {
                 tui.log_message(

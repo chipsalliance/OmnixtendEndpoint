@@ -47,8 +47,8 @@ impl Connection {
             connection: s,
             cache: Cache::new(id),
             operations: Operations::new(),
-            addr: addr,
-            size: size,
+            addr,
+            size,
             tick: Mutex::new(Tick::new(
                 Duration::from_millis(1),
                 Duration::from_millis(100),
@@ -95,7 +95,7 @@ impl Connection {
     pub fn get_state(&self, mac: &MacAddr) -> TuiConnectionState {
         let status = self.connection.status();
         TuiConnectionState {
-            mac: mac.clone(),
+            mac: *mac,
             addr: self.addr,
             size: self.size,
             state: self.connection.connection_state(),
@@ -145,7 +145,7 @@ impl Connection {
 
         let addr = addr - self.addr;
         self.cache
-            .read(&self.operations, &self.connection.credits(), addr)
+            .read(&self.operations, self.connection.credits(), addr)
             .context(CacheSnafu)
     }
 
@@ -154,7 +154,7 @@ impl Connection {
 
         let addr = addr - self.addr;
         self.cache
-            .write(&self.operations, &self.connection.credits(), addr, data)
+            .write(&self.operations, self.connection.credits(), addr, data)
             .context(CacheSnafu)
     }
 
@@ -184,7 +184,7 @@ impl Connection {
             .perform(
                 &TLOperations::Write(WriteOp {
                     address: addr,
-                    data: data,
+                    data,
                 }),
                 self.connection.credits(),
             )
